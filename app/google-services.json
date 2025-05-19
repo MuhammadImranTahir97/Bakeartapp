@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "443612384556",
+    "project_id": "bakeart-bfa60",
+    "storage_bucket": "bakeart-bfa60.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:443612384556:android:44e48d70f8b20ecbf9b089",
+        "android_client_info": {
+          "package_name": "com.example.bakeart"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDFlbvoxXAHvQF4WAAcOwMSJFsy9L3_2Bg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

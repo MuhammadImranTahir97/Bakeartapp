@@ -1,8 +1,3 @@
-plugins {
-    id("com.android.application")
-    id("com.google.gms.google-services")
-}
-
 android {
     namespace = "com.example.bakeart"
     compileSdk = 34
@@ -13,7 +8,6 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -31,11 +25,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-}
 
-dependencies {
-    implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("com.google.android.material:material:1.9.0")
-    implementation("com.google.firebase:firebase-auth:22.3.0")
-    implementation("com.google.firebase:firebase-database:20.3.0")
+    sourceSets["main"].manifest.srcFile("src/main/AndroidManifest.xml")
 }
