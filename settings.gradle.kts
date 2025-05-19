@@ -6,7 +6,7 @@ pluginManagement {
     }
 
     plugins {
-        id("com.android.application") version "8.10.0" apply false
+        id("com.android.application") version "8.1.0" apply false
         id("com.google.gms.google-services") version "4.3.15" apply false
     }
 }
@@ -17,3 +17,6 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
+
+rootProject.name = "BakeArt"
+include(":app") // ✅ This is what was missing

@@ -1,6 +1,8 @@
 package com.example.bakeart;
 
 public class Recipe {
+    public String verificationNote;
+
     public String id;
     public String title;
     public String ingredients;
