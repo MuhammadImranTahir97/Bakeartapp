@@ -5,20 +5,21 @@ import android.os.Bundle;
 import android.content.Intent;
 import android.text.TextUtils;
 import android.widget.*;
-import com.google.firebase.auth.FirebaseAuth;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class LoginActivity extends AppCompatActivity {
 
     EditText email, password;
     Button loginBtn, registerBtn;
-    FirebaseAuth auth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        auth = FirebaseAuth.getInstance();
         email = findViewById(R.id.email);
         password = findViewById(R.id.password);
         loginBtn = findViewById(R.id.loginBtn);
@@ -33,13 +34,7 @@ public class LoginActivity extends AppCompatActivity {
                 return;
             }
 
-            auth.signInWithEmailAndPassword(userEmail, userPass)
-                    .addOnSuccessListener(a -> {
-                        Toast.makeText(this, "Login Success!", Toast.LENGTH_SHORT).show();
-                        startActivity(new Intent(LoginActivity.this, MainActivity.class));
-                        finish(); // prevents returning to login screen
-                    })
-                    .addOnFailureListener(e -> Toast.makeText(this, "Login failed: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+            loginUser(userEmail, userPass);
         });
 
         registerBtn.setOnClickListener(v -> {
@@ -51,13 +46,49 @@ public class LoginActivity extends AppCompatActivity {
                 return;
             }
 
-            auth.createUserWithEmailAndPassword(userEmail, userPass)
-                    .addOnSuccessListener(a -> {
-                        Toast.makeText(this, "Registered Successfully!", Toast.LENGTH_SHORT).show();
-                        startActivity(new Intent(LoginActivity.this, MainActivity.class));
-                        finish(); // prevents returning to login screen
-                    })
-                    .addOnFailureListener(e -> Toast.makeText(this, "Registration failed: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+            registerUser(userEmail, userPass);
+        });
+    }
+
+    private void loginUser(String email, String password) {
+        User user = new User(email, password);
+        ApiClient.getUserService().login(user).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    Toast.makeText(LoginActivity.this, "Login Successful", Toast.LENGTH_SHORT).show();
+                    startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                    finish();
+                } else {
+                    Toast.makeText(LoginActivity.this, "Login failed: Invalid credentials", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Toast.makeText(LoginActivity.this, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void registerUser(String email, String password) {
+        User user = new User(email, password);
+        ApiClient.getUserService().register(user).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    Toast.makeText(LoginActivity.this, "Registration Successful", Toast.LENGTH_SHORT).show();
+                    startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                    finish();
+                } else {
+                    Toast.makeText(LoginActivity.this, "Registration failed", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Toast.makeText(LoginActivity.this, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
         });
     }
 }

@@ -7,14 +7,11 @@ import android.widget.*;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 
 public class ProfileFragment extends Fragment {
 
     private TextView userEmail;
     private Button logoutBtn;
-    private FirebaseAuth auth;
 
     @Nullable
     @Override
@@ -27,17 +24,19 @@ public class ProfileFragment extends Fragment {
         userEmail = view.findViewById(R.id.userEmail);
         logoutBtn = view.findViewById(R.id.logoutBtn);
 
-        auth = FirebaseAuth.getInstance();
-        FirebaseUser user = auth.getCurrentUser();
+        // Load saved session email (or username) from SharedPreferences or static user session
+        String email = UserSession.getEmail(); // Custom session manager (you must define this class)
 
-        if (user != null) {
-            userEmail.setText("Logged in as:\n" + user.getEmail());
+        if (email != null && !email.isEmpty()) {
+            userEmail.setText("Logged in as:\n" + email);
+        } else {
+            userEmail.setText("Guest User");
         }
 
         logoutBtn.setOnClickListener(v -> {
-            auth.signOut();
+            UserSession.logout(); // clear session
             startActivity(new Intent(getActivity(), LoginActivity.class));
-            getActivity().finish(); // prevents going back to profile
+            getActivity().finish(); // prevent navigating back
         });
 
         return view;

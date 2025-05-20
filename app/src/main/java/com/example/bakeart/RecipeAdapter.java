@@ -4,30 +4,21 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
-import android.content.Context;
-import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.squareup.picasso.Picasso;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.*;
-
 import java.util.List;
 
 public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.RecipeViewHolder> {
 
     private List<Recipe> recipeList;
     private boolean isModerator;
-    private FirebaseAuth auth = FirebaseAuth.getInstance();
-    private DatabaseReference dbRef = FirebaseDatabase.getInstance().getReference();
 
-    // Constructor for regular user
     public RecipeAdapter(List<Recipe> recipeList) {
         this.recipeList = recipeList;
         this.isModerator = false;
     }
 
-    // Constructor for moderator view
     public RecipeAdapter(List<Recipe> recipeList, boolean isModerator) {
         this.recipeList = recipeList;
         this.isModerator = isModerator;
@@ -35,8 +26,7 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.RecipeView
 
     public static class RecipeViewHolder extends RecyclerView.ViewHolder {
         ImageView imageView;
-        TextView title, ingredients, steps, likeCount;
-        ImageButton likeBtn, favBtn;
+        TextView title, ingredients, steps;
         LinearLayout container;
 
         public RecipeViewHolder(View itemView) {
@@ -45,10 +35,7 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.RecipeView
             title = itemView.findViewById(R.id.recipeTitle);
             ingredients = itemView.findViewById(R.id.recipeIngredients);
             steps = itemView.findViewById(R.id.recipeSteps);
-            likeCount = itemView.findViewById(R.id.likeCount);
-            likeBtn = itemView.findViewById(R.id.likeBtn);
-            favBtn = itemView.findViewById(R.id.favBtn);
-            container = (LinearLayout) itemView; // Assumes root in recipe_item.xml is LinearLayout
+            container = (LinearLayout) itemView; // assume LinearLayout as root
         }
     }
 
@@ -63,40 +50,20 @@ public class RecipeAdapter extends RecyclerView.Adapter<RecipeAdapter.RecipeView
     public void onBindViewHolder(@NonNull RecipeViewHolder holder, int position) {
         Recipe r = recipeList.get(position);
 
-        holder.title.setText(r.title);
-        holder.ingredients.setText("Ingredients:\n" + r.ingredients);
-        holder.steps.setText("Steps:\n" + r.steps);
-        holder.likeCount.setText(String.valueOf(r.likeCount));
+        holder.title.setText(r.getTitle());
+        holder.ingredients.setText("Ingredients:\n" + r.getIngredients());
+        holder.steps.setText("Steps:\n" + r.getSteps());
 
-        Picasso.get().load(r.imageUrl).into(holder.imageView);
+        Picasso.get().load(r.getImageUrl()).into(holder.imageView);
 
-        // Like Button
-        holder.likeBtn.setOnClickListener(v -> {
-            if (auth.getCurrentUser() == null) return;
-            String uid = auth.getCurrentUser().getUid();
-            dbRef.child("likes").child(r.id).child(uid).setValue(true);
-            dbRef.child("recipes").child(r.id).child("likeCount").setValue(r.likeCount + 1);
-        });
-
-        // Favorite Button
-        holder.favBtn.setOnClickListener(v -> {
-            if (auth.getCurrentUser() == null) return;
-            String uid = auth.getCurrentUser().getUid();
-            dbRef.child("favorites").child(uid).child(r.id).setValue(r);
-        });
-
-        // Moderator "Verify" Button
+        // Only for moderators
         if (isModerator) {
             Button verifyBtn = new Button(holder.itemView.getContext());
             verifyBtn.setText("Verify Recipe");
-
             verifyBtn.setOnClickListener(v -> {
-                dbRef.child("recipes").child(r.id).child("category").setValue("Verified");
-                dbRef.child("recipes").child(r.id).child("verificationNote")
-                        .setValue("Your recipe has been verified!");
-                Toast.makeText(holder.itemView.getContext(), "Recipe Verified!", Toast.LENGTH_SHORT).show();
+                // You should implement this API call
+                Toast.makeText(holder.itemView.getContext(), "Marked for verification", Toast.LENGTH_SHORT).show();
             });
-
             holder.container.addView(verifyBtn);
         }
     }

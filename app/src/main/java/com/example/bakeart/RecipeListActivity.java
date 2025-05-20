@@ -1,22 +1,24 @@
 package com.example.bakeart;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import android.os.Bundle;
 import android.widget.Toast;
-import com.google.firebase.database.*;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class RecipeListActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
     private List<Recipe> recipeList;
     private RecipeAdapter adapter;
-    private DatabaseReference dbRef;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,24 +32,25 @@ public class RecipeListActivity extends AppCompatActivity {
         adapter = new RecipeAdapter(recipeList);
         recyclerView.setAdapter(adapter);
 
-        dbRef = FirebaseDatabase.getInstance().getReference("recipes");
+        loadRecipesFromApi();
+    }
 
-        dbRef.addValueEventListener(new ValueEventListener() {
+    private void loadRecipesFromApi() {
+        ApiClient.getAllRecipes(new Callback<List<Recipe>>() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                recipeList.clear();
-                for (DataSnapshot snap : snapshot.getChildren()) {
-                    Recipe r = snap.getValue(Recipe.class);
-                    if (r != null) {
-                        recipeList.add(r);
-                    }
+            public void onResponse(Call<List<Recipe>> call, Response<List<Recipe>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    recipeList.clear();
+                    recipeList.addAll(response.body());
+                    adapter.notifyDataSetChanged();
+                } else {
+                    Toast.makeText(RecipeListActivity.this, "Failed to get recipes", Toast.LENGTH_SHORT).show();
                 }
-                adapter.notifyDataSetChanged();
             }
 
             @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(RecipeListActivity.this, "Failed to load recipes.", Toast.LENGTH_SHORT).show();
+            public void onFailure(Call<List<Recipe>> call, Throwable t) {
+                Toast.makeText(RecipeListActivity.this, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }

@@ -11,16 +11,18 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.firebase.database.*;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class ModeratorFragment extends Fragment {
 
     private RecyclerView recyclerView;
     private List<Recipe> recipeList;
-    private DatabaseReference dbRef;
+    private RecipeAdapter adapter;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -33,33 +35,36 @@ public class ModeratorFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         recipeList = new ArrayList<>();
-        dbRef = FirebaseDatabase.getInstance().getReference();
-
-        RecipeAdapter adapter = new RecipeAdapter(recipeList, true);  // moderator = true
+        adapter = new RecipeAdapter(recipeList, true);  // true for moderator view
         recyclerView.setAdapter(adapter);
 
-        dbRef.child("recipes")
-                .orderByChild("category")
-                .equalTo("Try")
-                .addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        recipeList.clear();
-                        for (DataSnapshot s : snapshot.getChildren()) {
-                            Recipe r = s.getValue(Recipe.class);
-                            if (r != null) {
-                                recipeList.add(r);
-                            }
-                        }
-                        adapter.notifyDataSetChanged();
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError error) {
-                        Toast.makeText(getContext(), "Error loading recipes.", Toast.LENGTH_SHORT).show();
-                    }
-                });
+        fetchTryCategoryRecipes();
 
         return v;
+    }
+
+    private void fetchTryCategoryRecipes() {
+        ApiClient.getRecipeService().getAllRecipes().enqueue(new Callback<List<Recipe>>() {
+            @Override
+            public void onResponse(Call<List<Recipe>> call, Response<List<Recipe>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    recipeList.clear();
+                    for (Recipe r : response.body()) {
+                        if ("Try".equalsIgnoreCase(r.getCategory())) {
+
+                            recipeList.add(r);
+                        }
+                    }
+                    adapter.notifyDataSetChanged();
+                } else {
+                    Toast.makeText(getContext(), "Failed to fetch recipes", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<Recipe>> call, Throwable t) {
+                Toast.makeText(getContext(), "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }

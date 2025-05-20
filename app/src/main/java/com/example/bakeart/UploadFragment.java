@@ -7,14 +7,10 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.*;
 import android.widget.*;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import com.google.firebase.database.*;
-import com.google.firebase.storage.*;
 
-import java.util.*;
+import java.io.File;
 
 public class UploadFragment extends Fragment {
 
@@ -22,10 +18,7 @@ public class UploadFragment extends Fragment {
     private Button uploadBtn, selectImageBtn;
     private ImageView imageView;
     private Uri imageUri;
-    private DatabaseReference recipeDbRef;
-    private StorageReference storageRef;
-
-    private ActivityResultLauncher<Intent> imagePickerLauncher;
+    private File imageFile;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -37,25 +30,12 @@ public class UploadFragment extends Fragment {
         funFactInput = view.findViewById(R.id.funFactInput);
         uploadBtn = view.findViewById(R.id.uploadBtn);
         selectImageBtn = view.findViewById(R.id.selectImageBtn);
-        imageView = view.findViewById(R.id.imagePreview); // match your layout
-
-        recipeDbRef = FirebaseDatabase.getInstance().getReference("recipes");
-        storageRef = FirebaseStorage.getInstance().getReference("recipe_images");
-
-        imagePickerLauncher = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(),
-                result -> {
-                    if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
-                        imageUri = result.getData().getData();
-                        imageView.setImageURI(imageUri);
-                    }
-                }
-        );
+        imageView = view.findViewById(R.id.imagePreview);
 
         selectImageBtn.setOnClickListener(v -> {
             Intent i = new Intent(Intent.ACTION_GET_CONTENT);
             i.setType("image/*");
-            imagePickerLauncher.launch(i);
+            startActivityForResult(i, 101);
         });
 
         uploadBtn.setOnClickListener(v -> uploadRecipe());
@@ -74,27 +54,19 @@ public class UploadFragment extends Fragment {
             return;
         }
 
-        if (imageUri == null) {
+        if (imageFile == null) {
             Toast.makeText(getContext(), "Please select an image", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        String imageName = UUID.randomUUID().toString();
-        StorageReference imageRef = storageRef.child(imageName);
-
-        imageRef.putFile(imageUri)
-                .addOnSuccessListener(taskSnapshot -> imageRef.getDownloadUrl()
-                        .addOnSuccessListener(uri -> {
-                            String recipeId = recipeDbRef.push().getKey();
-                            if (recipeId != null) {
-                                Recipe recipe = new Recipe(recipeId, title, ingredients, steps, funFact, "Try", uri.toString());
-                                recipeDbRef.child(recipeId).setValue(recipe);
-                                Toast.makeText(getContext(), "Recipe Uploaded!", Toast.LENGTH_SHORT).show();
-                                clearForm();
-                            }
-                        }))
-                .addOnFailureListener(e ->
-                        Toast.makeText(getContext(), "Image Upload Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+        ApiClient.uploadRecipe(title, ingredients, steps, funFact, imageFile, success -> {
+            if (success) {
+                Toast.makeText(getContext(), "Recipe uploaded!", Toast.LENGTH_SHORT).show();
+                clearForm();
+            } else {
+                Toast.makeText(getContext(), "Failed to upload", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void clearForm() {
@@ -104,5 +76,16 @@ public class UploadFragment extends Fragment {
         funFactInput.setText("");
         imageView.setImageResource(android.R.color.transparent);
         imageUri = null;
+        imageFile = null;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 101 && resultCode == Activity.RESULT_OK && data != null) {
+            imageUri = data.getData();
+            imageView.setImageURI(imageUri);
+            imageFile = FileUtils.getFileFromUri(getContext(), imageUri);
+        }
     }
 }

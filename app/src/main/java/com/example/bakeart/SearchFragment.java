@@ -4,14 +4,17 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.*;
 import android.widget.*;
+
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import com.google.firebase.database.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class SearchFragment extends Fragment {
 
@@ -47,31 +50,34 @@ public class SearchFragment extends Fragment {
 
             String[] queryWords = input.split(",");
 
-            FirebaseDatabase.getInstance().getReference("recipes")
-                    .addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot snapshot) {
-                            resultList.clear();
-                            for (DataSnapshot s : snapshot.getChildren()) {
-                                Recipe r = s.getValue(Recipe.class);
-                                if (r != null && r.ingredients != null) {
-                                    String recipeIngredients = r.ingredients.toLowerCase();
-                                    for (String word : queryWords) {
-                                        if (recipeIngredients.contains(word.trim())) {
-                                            resultList.add(r);
-                                            break;
-                                        }
+            // Fetch all recipes
+            ApiClient.getAllRecipes(new Callback<List<Recipe>>() {
+                @Override
+                public void onResponse(Call<List<Recipe>> call, Response<List<Recipe>> response) {
+                    resultList.clear();
+                    if (response.isSuccessful() && response.body() != null) {
+                        for (Recipe r : response.body()) {
+                            if (r.getIngredients() != null) {
+                                String ingredients = r.getIngredients().toLowerCase();
+                                for (String word : queryWords) {
+                                    if (ingredients.contains(word.trim())) {
+                                        resultList.add(r);
+                                        break;
                                     }
                                 }
                             }
-                            adapter.notifyDataSetChanged();
                         }
+                        adapter.notifyDataSetChanged();
+                    } else {
+                        Toast.makeText(getContext(), "No results found.", Toast.LENGTH_SHORT).show();
+                    }
+                }
 
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError error) {
-                            Toast.makeText(getContext(), "Search failed: " + error.getMessage(), Toast.LENGTH_SHORT).show();
-                        }
-                    });
+                @Override
+                public void onFailure(Call<List<Recipe>> call, Throwable t) {
+                    Toast.makeText(getContext(), "Search failed: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            });
         });
 
         return v;
