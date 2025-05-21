@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recipeRecycler"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="8dp"
+        android:clipToPadding="false" />
+
+    <EditText
+        android:id="@+id/servingInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter servings"
+        android:inputType="number" />
+
+    <Button
+        android:id="@+id/scaleBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Scale Ingredients" />
+
+    <TextView
+        android:id="@+id/scaledIngredients"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Scaled Ingredients Will Show Here"
+        android:padding="8dp"/>
+    <TextView
+        android:id="@+id/ingredientExplanationText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Ingredient Explanation"
+        android:textStyle="bold"
+        android:paddingTop="8dp"/>
+
+    <TextView
+        android:id="@+id/funFactText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Fun Fact"
+        android:textStyle="italic"
+        android:paddingTop="4dp"/>
+
+</RelativeLayout>

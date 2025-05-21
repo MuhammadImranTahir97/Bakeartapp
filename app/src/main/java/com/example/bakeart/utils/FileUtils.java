@@ -1,4 +1,4 @@
-package com.example.bakeart;
+package com.example.bakeart.utils;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -53,4 +53,3 @@ public class FileUtils {
         return result;
     }
 }
-
