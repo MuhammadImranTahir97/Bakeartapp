@@ -1,10 +1,16 @@
 package com.example.bakeart;
 
-import androidx.appcompat.app.AppCompatActivity;
-import android.os.Bundle;
 import android.content.Intent;
+import android.os.Bundle;
 import android.text.TextUtils;
 import android.widget.*;
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.bakeart.activities.RegisterActivity;
+import com.example.bakeart.api.RecipeApi;
+import com.example.bakeart.models.User;
+import com.example.bakeart.utils.RetrofitClient;
+import com.example.bakeart.utils.UserSession;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -19,6 +25,10 @@ public class LoginActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+        TextView tvRegisterLink = findViewById(R.id.tvRegisterLink);
+        tvRegisterLink.setOnClickListener(v -> {
+            startActivity(new Intent(LoginActivity.this, RegisterActivity.class));
+        });
 
         email = findViewById(R.id.email);
         password = findViewById(R.id.password);
@@ -52,10 +62,18 @@ public class LoginActivity extends AppCompatActivity {
 
     private void loginUser(String email, String password) {
         User user = new User(email, password);
-        ApiClient.getUserService().login(user).enqueue(new Callback<Void>() {
+        RecipeApi api = RetrofitClient.getInstance().create(RecipeApi.class);
+        api.login(user).enqueue(new Callback<User>() {
             @Override
-            public void onResponse(Call<Void> call, Response<Void> response) {
-                if (response.isSuccessful()) {
+            public void onResponse(Call<User> call, Response<User> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    UserSession session = new UserSession(LoginActivity.this);
+                    session.saveUser(
+                            response.body().get_id(),
+                            response.body().getUsername(),
+                            response.body().getRole()
+                    );
+
                     Toast.makeText(LoginActivity.this, "Login Successful", Toast.LENGTH_SHORT).show();
                     startActivity(new Intent(LoginActivity.this, MainActivity.class));
                     finish();
@@ -65,7 +83,7 @@ public class LoginActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(Call<Void> call, Throwable t) {
+            public void onFailure(Call<User> call, Throwable t) {
                 Toast.makeText(LoginActivity.this, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
@@ -73,10 +91,18 @@ public class LoginActivity extends AppCompatActivity {
 
     private void registerUser(String email, String password) {
         User user = new User(email, password);
-        ApiClient.getUserService().register(user).enqueue(new Callback<Void>() {
+        RecipeApi api = RetrofitClient.getInstance().create(RecipeApi.class);
+        api.register(user).enqueue(new Callback<User>() {
             @Override
-            public void onResponse(Call<Void> call, Response<Void> response) {
-                if (response.isSuccessful()) {
+            public void onResponse(Call<User> call, Response<User> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    UserSession session = new UserSession(LoginActivity.this);
+                    session.saveUser(
+                            response.body().get_id(),
+                            response.body().getUsername(),
+                            response.body().getRole()
+                    );
+
                     Toast.makeText(LoginActivity.this, "Registration Successful", Toast.LENGTH_SHORT).show();
                     startActivity(new Intent(LoginActivity.this, MainActivity.class));
                     finish();
@@ -86,9 +112,10 @@ public class LoginActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(Call<Void> call, Throwable t) {
+            public void onFailure(Call<User> call, Throwable t) {
                 Toast.makeText(LoginActivity.this, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
 }
+
